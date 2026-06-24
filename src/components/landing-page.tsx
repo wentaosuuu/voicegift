@@ -12,27 +12,28 @@ export function LandingPage({ turnstileSiteKey }: { turnstileSiteKey?: string })
       <main>
         <section className="one-screen">
           <div className="one-screen-copy">
-            <p className="eyebrow">Personal song gift · made with your voice</p>
-            <h1>Give them a song that sounds like you.</h1>
+            <p className="eyebrow">AI song gift · made from your own voice</p>
+            <h1>Turn your voice into a personal song gift.</h1>
             <p className="one-screen-subtitle">
-              Type one memory, record 20 seconds of your voice, get a private original song to download or share.
+              Write who it is for, record a short voice sample, and get a private original song preview you can unlock, download, or share.
             </p>
-            <div className="hero-actions">
-              <button className="button" onClick={() => setStudioOpen(true)}>Start with a free preview →</button>
-              <span className="micro-note">$9.99 to unlock the full song</span>
-            </div>
-            <div className="proof-grid" aria-label="Product promises">
-              <span><b>15 sec</b> free preview</span>
-              <span><b>No singing</b> just read + hum</span>
-              <span><b>Private</b> source voice expires</span>
+
+            <div className="central-action-card" aria-label="Start creating a song gift">
+              <button className="button primary-cta" onClick={() => setStudioOpen(true)}>Create a free preview →</button>
+              <div className="quick-steps">
+                <span><b>1</b> Add their name + memory</span>
+                <span><b>2</b> Record 20 seconds</span>
+                <span><b>3</b> Preview before paying</span>
+              </div>
+              <p>$9.99 only if you want the full MP3 + share page.</p>
             </div>
           </div>
 
           <div className="instant-card" aria-label="Create a VoiceGift preview">
             <div className="instant-card-top">
               <div>
-                <p className="kicker">Create in one flow</p>
-                <h2>Your first preview starts here</h2>
+                <p className="kicker">What you get</p>
+                <h2>A short custom song in your voice</h2>
               </div>
               <div className="price-badge">$9.99</div>
             </div>
@@ -63,6 +64,12 @@ export function LandingPage({ turnstileSiteKey }: { turnstileSiteKey?: string })
 
             <button className="button button-full" onClick={() => setStudioOpen(true)}>Create my preview →</button>
             <p className="card-footnote">Original music only · voice verification required · no subscription</p>
+          </div>
+
+          <div className="proof-grid" aria-label="Product promises">
+            <span><b>Free preview</b> hear the idea first</span>
+            <span><b>No singing</b> just read + hum</span>
+            <span><b>Private</b> source voice expires</span>
           </div>
         </section>
       </main>
