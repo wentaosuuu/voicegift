@@ -117,7 +117,7 @@ export function SongStudio({
     setError("");
     try {
       let created = activeProject;
-      if (!created) {
+      const createProject = async () => {
         const createResponse = await fetch("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -134,12 +134,13 @@ export function SongStudio({
         });
         const createdData = await createResponse.json();
         if (!createResponse.ok) throw new Error(createdData.error?.message ?? "Could not create the project");
-        created = createdData;
         setActiveProject(createdData);
-      }
+        return createdData as { projectId: string; accessToken: string; projectUrl: string };
+      };
+      if (!created) created = await createProject();
       if (!created) throw new Error("Could not initialize the project");
       const headers = { "Content-Type": "application/json", "x-project-token": created.accessToken };
-      const uploadResponse = await fetch(`/api/projects/${created.projectId}/upload`, {
+      let uploadResponse = await fetch(`/api/projects/${created.projectId}/upload`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -148,8 +149,22 @@ export function SongStudio({
           size: voiceFile.size
         })
       });
+      if (uploadResponse.status === 401 && activeProject) {
+        setActiveProject(null);
+        created = await createProject();
+        uploadResponse = await fetch(`/api/projects/${created.projectId}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-project-token": created.accessToken },
+          body: JSON.stringify({
+            fileName: voiceFile.name,
+            contentType: normalizedContentType(voiceFile),
+            size: voiceFile.size
+          })
+        });
+      }
       const upload = await uploadResponse.json();
       if (!uploadResponse.ok) throw new Error(upload.error?.message ?? "Could not prepare upload");
+      const projectHeaders = { "Content-Type": "application/json", "x-project-token": created.accessToken };
 
       if (upload.mock) {
         const result = await fetch(upload.signedUrl, {
@@ -170,7 +185,7 @@ export function SongStudio({
 
       const verifiedResponse = await fetch(`/api/projects/${created.projectId}/voice-complete`, {
         method: "POST",
-        headers,
+        headers: projectHeaders,
         body: JSON.stringify({ path: upload.path, challengeToken: challenge.token })
       });
       const verified = await verifiedResponse.json();
@@ -178,7 +193,7 @@ export function SongStudio({
 
       const previewResponse = await fetch(`/api/projects/${created.projectId}/start-preview`, {
         method: "POST",
-        headers
+        headers: projectHeaders
       });
       const preview = await previewResponse.json();
       if (!previewResponse.ok) throw new Error(preview.error?.message ?? "Preview generation failed");

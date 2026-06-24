@@ -12,7 +12,7 @@ export function LandingPage({ turnstileSiteKey }: { turnstileSiteKey?: string })
 
   useEffect(() => {
     if (studioOpen) {
-      studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      studioRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [studioOpen]);
 

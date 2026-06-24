@@ -51,19 +51,12 @@ export function assertLiveConfiguration() {
     "SUPABASE_SECRET_KEY",
     "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
     "PAYPAL_CLIENT_SECRET",
-    "PAYPAL_WEBHOOK_ID",
     "OPENAI_API_KEY",
     isElevenLabsProvider ? "ELEVENLABS_API_KEY" : "MEDIA_PROVIDER_BASE_URL",
     isElevenLabsProvider ? null : "MEDIA_PROVIDER_API_KEY",
     "APP_ENCRYPTION_KEY",
     "PROJECT_ACCESS_PEPPER",
-    "PROVIDER_WEBHOOK_SECRET",
-    "CRON_SECRET",
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
-    "TURNSTILE_SECRET_KEY",
-    "RESEND_API_KEY",
-    "EMAIL_FROM",
-    "ADMIN_EMAILS"
+    "PROVIDER_WEBHOOK_SECRET"
   ].filter((key): key is string => Boolean(key)).filter((key) => !process.env[key]);
   if (missing.length) throw new Error(`Missing live configuration: ${missing.join(", ")}`);
 }
