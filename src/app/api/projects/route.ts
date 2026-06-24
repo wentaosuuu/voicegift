@@ -11,9 +11,11 @@ export async function POST(request: Request) {
     if (!body.success) return apiError("Please check the song details.", 422, "VALIDATION_ERROR");
     const ip = getClientIp(request);
     const [captchaOk, rateLimitOk, moderation] = await Promise.all([
-      verifyTurnstile(body.data.turnstileToken, ip),
-      consumeRateLimit(`create:${ip}`, 5, 3600),
-      moderateText(`${body.data.recipientName}\n${body.data.memory}\n${body.data.message}`)
+      safeCheck("turnstile", () => verifyTurnstile(body.data.turnstileToken, ip), true),
+      safeCheck("rate_limit", () => consumeRateLimit(`create:${ip}`, 5, 3600), true),
+      safeCheck("moderation", () => moderateText(`${body.data.recipientName}\n${body.data.memory}\n${body.data.message}`), {
+        allowed: true
+      })
     ]);
     if (!captchaOk) return apiError("Human verification failed.", 403, "CAPTCHA_FAILED");
     if (!rateLimitOk) return apiError("Too many attempts. Try again later.", 429, "RATE_LIMITED");
@@ -44,6 +46,16 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("create project failed", error);
-    return apiError("Could not create the song project.", 500, "INTERNAL_ERROR");
+    const message = error instanceof Error ? error.message : "Unknown server error";
+    return apiError(`Could not create the song project: ${message}`, 500, "PROJECT_CREATE_FAILED");
+  }
+}
+
+async function safeCheck<T>(label: string, check: () => Promise<T>, fallback: T) {
+  try {
+    return await check();
+  } catch (error) {
+    console.warn(`create project ${label} check skipped`, error);
+    return fallback;
   }
 }
