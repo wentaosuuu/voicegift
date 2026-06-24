@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandHeader } from "@/components/brand-header";
 import { SongStudio } from "@/components/song-studio";
 
 export function LandingPage({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
   const [studioOpen, setStudioOpen] = useState(false);
+  const studioRef = useRef<HTMLDivElement | null>(null);
+
+  const openStudio = () => setStudioOpen(true);
+
+  useEffect(() => {
+    if (studioOpen) {
+      studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [studioOpen]);
+
   return (
     <>
-      <BrandHeader onCreate={() => setStudioOpen(true)} />
+      <BrandHeader onCreate={openStudio} />
       <main>
         <section className="one-screen">
           <div className="one-screen-copy">
@@ -25,12 +35,20 @@ export function LandingPage({ turnstileSiteKey }: { turnstileSiteKey?: string })
               <span><b>2</b><strong>Record 20 seconds</strong><small>No singing. Just read a phrase and hum.</small></span>
               <span><b>3</b><strong>Preview before paying</strong><small>Unlock only if the idea feels right.</small></span>
             </div>
-            <button className="button primary-cta" onClick={() => setStudioOpen(true)}>Create a free preview →</button>
+            <button className="button primary-cta" onClick={openStudio}>Create a free preview →</button>
             <p>Free preview first · no singing needed · $9.99 only if you unlock the full MP3 + share page.</p>
           </div>
         </section>
+
+        <div ref={studioRef}>
+          <SongStudio
+            open={studioOpen}
+            onClose={() => setStudioOpen(false)}
+            presentation="inline"
+            turnstileSiteKey={turnstileSiteKey}
+          />
+        </div>
       </main>
-      <SongStudio open={studioOpen} onClose={() => setStudioOpen(false)} turnstileSiteKey={turnstileSiteKey} />
     </>
   );
 }

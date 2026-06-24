@@ -24,10 +24,12 @@ function normalizedContentType(file: File) {
 export function SongStudio({
   open,
   onClose,
+  presentation = "modal",
   turnstileSiteKey
 }: {
   open: boolean;
   onClose: () => void;
+  presentation?: "modal" | "inline";
   turnstileSiteKey?: string;
 }) {
   const router = useRouter();
@@ -196,9 +198,8 @@ export function SongStudio({
     setStep(2);
   };
 
-  return (
-    <div className="modal-shell" role="dialog" aria-modal="true" aria-label="Create a VoiceGift song">
-      <section className="studio">
+  const studioContent = (
+      <section className={`studio ${presentation === "inline" ? "studio-inline" : ""}`}>
         <button className="close-button" onClick={onClose} aria-label="Close">×</button>
         <div className="progress" aria-label={`Step ${step} of 4`}>
           {[1, 2, 3, 4].map((item) => <i className={item <= step ? "active" : ""} key={item} />)}
@@ -294,6 +295,19 @@ export function SongStudio({
           </>
         ) : null}
       </section>
+  );
+
+  if (presentation === "inline") {
+    return (
+      <div className="inline-studio-shell" aria-label="Create a VoiceGift song">
+        {studioContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-shell" role="dialog" aria-modal="true" aria-label="Create a VoiceGift song">
+      {studioContent}
     </div>
   );
 }

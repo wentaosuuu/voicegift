@@ -331,6 +331,25 @@ h1, h2, h3, p { margin-top: 0; }
 .site-footer { min-height:64px; background:var(--ink); color:white; padding:14px 7vw; display:flex; align-items:center; justify-content:space-between; }
 .brand-inverse .brand-wave i { background:var(--yellow); }.site-footer p { margin:0; opacity:.5; font-size:12px; }.site-footer nav { display:flex; gap:22px; font-size:11px; opacity:.7; }
 
+.inline-studio-shell {
+  background: linear-gradient(180deg, #e5f1eb, var(--cream));
+  padding: 34px 20px 70px;
+}
+.studio.studio-inline {
+  height: auto;
+  width: min(920px, 100%);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  padding: 42px 52px;
+  overflow: visible;
+  box-shadow: var(--shadow);
+}
+.studio.studio-inline .close-button {
+  right: 22px;
+  top: 16px;
+}
+
 .modal-shell { position:fixed; inset:0; z-index:100; background:rgba(14,29,27,.65); backdrop-filter:blur(5px); display:grid; justify-items:end; }
 .studio { height:100%; width:min(620px,100%); background:var(--paper); padding:52px 58px; overflow-y:auto; box-shadow:-20px 0 60px rgba(0,0,0,.15); position:relative; }
 .close-button { position:absolute; right:24px; top:18px; border:0; background:transparent; font-size:30px; }
@@ -413,5 +432,12 @@ h1, h2, h3, p { margin-top: 0; }
   .price-badge {
     display: inline-flex;
     margin-top: 14px;
+  }
+  .inline-studio-shell {
+    padding: 24px 14px 44px;
+  }
+  .studio.studio-inline {
+    border-radius: 24px;
+    padding: 42px 20px 28px;
   }
 }
