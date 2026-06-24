@@ -8,14 +8,13 @@ export function BrandHeader({ onCreate }: { onCreate?: () => void }) {
         VoiceGift
       </Link>
       <nav aria-label="Main navigation">
-        <Link href="/#how">How it works</Link>
-        <Link href="/#examples">Examples</Link>
-        <Link href="/voice-safety">Your voice, protected</Link>
+        <Link href="/voice-safety">Voice safety</Link>
+        <Link href="/privacy">Privacy</Link>
       </nav>
       {onCreate ? (
-        <button className="button-dark" onClick={onCreate}>Make a song</button>
+        <button className="button-dark" onClick={onCreate}>Start preview</button>
       ) : (
-        <Link className="button-dark" href="/#create">Make a song</Link>
+        <Link className="button-dark" href="/">Start preview</Link>
       )}
     </header>
   );
