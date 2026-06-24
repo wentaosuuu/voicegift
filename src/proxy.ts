@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return NextResponse.next({ request });
 
@@ -24,3 +24,18 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ["/admin/:path*", "/auth/:path*"]
 };
+
+function normalizeSupabaseUrl(value?: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    if (url.hostname.endsWith(".supabase.co") && url.pathname === "/") return url.toString().replace(/\/$/, "");
+    const dashboardMatch = url.pathname.match(/\/project\/([a-z0-9]{20})/i);
+    if (url.hostname === "supabase.com" && dashboardMatch?.[1]) {
+      return `https://${dashboardMatch[1]}.supabase.co`;
+    }
+    return url.origin;
+  } catch {
+    return value;
+  }
+}

@@ -41,6 +41,7 @@ export const env = serverSchema.parse(process.env);
 export const isMockMode = env.APP_MODE === "mock";
 export const isElevenLabsProvider =
   env.MEDIA_PROVIDER === "elevenlabs" || Boolean(env.ELEVENLABS_API_KEY && !env.MEDIA_PROVIDER_API_KEY);
+export const supabaseUrl = normalizeSupabaseUrl(env.NEXT_PUBLIC_SUPABASE_URL);
 
 export function assertLiveConfiguration() {
   if (isMockMode) return;
@@ -59,4 +60,19 @@ export function assertLiveConfiguration() {
     "PROVIDER_WEBHOOK_SECRET"
   ].filter((key): key is string => Boolean(key)).filter((key) => !process.env[key]);
   if (missing.length) throw new Error(`Missing live configuration: ${missing.join(", ")}`);
+}
+
+function normalizeSupabaseUrl(value?: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    if (url.hostname.endsWith(".supabase.co") && url.pathname === "/") return url.toString().replace(/\/$/, "");
+    const dashboardMatch = url.pathname.match(/\/project\/([a-z0-9]{20})/i);
+    if (url.hostname === "supabase.com" && dashboardMatch?.[1]) {
+      return `https://${dashboardMatch[1]}.supabase.co`;
+    }
+    return url.origin;
+  } catch {
+    return value;
+  }
 }

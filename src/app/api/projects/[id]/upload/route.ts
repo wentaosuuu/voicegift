@@ -2,7 +2,7 @@ import { authorizeProject } from "@/lib/project-access";
 import { apiError, noStoreJson } from "@/lib/http";
 import { createVoiceUpload } from "@/lib/storage";
 import { uploadRequestSchema } from "@/lib/validation";
-import { env, isMockMode } from "@/lib/config";
+import { env, isMockMode, supabaseUrl } from "@/lib/config";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -16,7 +16,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       ...upload,
       bucket: env.SUPABASE_AUDIO_BUCKET,
       mock: isMockMode,
-      supabaseUrl: isMockMode ? null : env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseUrl: isMockMode ? null : supabaseUrl,
       supabaseKey: isMockMode ? null : env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
     });
   } catch (error) {
