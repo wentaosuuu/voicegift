@@ -1,4 +1,5 @@
-import { env, isMockMode } from "@/lib/config";
+import { env, isElevenLabsProvider, isMockMode } from "@/lib/config";
+import { transcribeWithElevenLabs } from "@/lib/providers/elevenlabs";
 import type { GenerationKind, Project } from "@/types/domain";
 
 type Stage = "music" | "voice" | "video";
@@ -59,6 +60,7 @@ export async function submitMediaJob(input: {
 
 export async function verifyVoiceSample(input: { audioUrl: string; phrase: string }) {
   if (isMockMode) return { verified: true, confidence: 0.99 };
+  if (isElevenLabsProvider) return verifyVoiceWithElevenLabs(input);
   if (!env.MEDIA_PROVIDER_BASE_URL || !env.MEDIA_PROVIDER_API_KEY) {
     throw new Error("Media provider is not configured");
   }
@@ -78,4 +80,27 @@ export async function verifyVoiceSample(input: { audioUrl: string; phrase: strin
   const data = (await response.json()) as { verified?: boolean; confidence?: number; reason?: string };
   if (!response.ok) throw new Error(data.reason || `Voice verification failed: ${response.status}`);
   return { verified: data.verified === true, confidence: data.confidence ?? 0 };
+}
+
+async function verifyVoiceWithElevenLabs(input: { audioUrl: string; phrase: string }) {
+  const transcript = await transcribeWithElevenLabs({ audioUrl: input.audioUrl });
+  const confidence = phraseSimilarity(transcript, input.phrase);
+  return { verified: confidence >= 0.55, confidence };
+}
+
+function phraseSimilarity(actual: string, expected: string) {
+  const actualWords = normalizeWords(actual);
+  const expectedWords = normalizeWords(expected);
+  if (!expectedWords.length) return 0;
+  const actualSet = new Set(actualWords);
+  const matched = expectedWords.filter((word) => actualSet.has(word)).length;
+  return matched / expectedWords.length;
+}
+
+function normalizeWords(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 1);
 }

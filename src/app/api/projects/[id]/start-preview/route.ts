@@ -2,6 +2,8 @@ import { startGeneration } from "@/lib/generation";
 import { apiError, noStoreJson } from "@/lib/http";
 import { authorizeProject } from "@/lib/project-access";
 
+export const maxDuration = 300;
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;

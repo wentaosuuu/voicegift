@@ -20,12 +20,18 @@ const serverSchema = z.object({
   TURNSTILE_SECRET_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_LYRICS_MODEL: z.string().default("gpt-5-mini"),
+  MEDIA_PROVIDER: z.enum(["bridge", "elevenlabs"]).default("bridge"),
   MEDIA_PROVIDER_BASE_URL: z.string().url().optional(),
   MEDIA_PROVIDER_API_KEY: z.string().optional(),
   MEDIA_PROVIDER_MUSIC_PATH: z.string().default("/v1/music"),
   MEDIA_PROVIDER_VOICE_PATH: z.string().default("/v1/voice-conversion"),
   MEDIA_PROVIDER_VIDEO_PATH: z.string().default("/v1/lyric-video"),
   MEDIA_PROVIDER_VERIFY_PATH: z.string().default("/v1/verify-voice"),
+  ELEVENLABS_API_KEY: z.string().optional(),
+  ELEVENLABS_MUSIC_MODEL_ID: z.string().default("music_v1"),
+  ELEVENLABS_SPEECH_TO_SPEECH_MODEL_ID: z.string().default("eleven_multilingual_sts_v2"),
+  ELEVENLABS_SPEECH_TO_TEXT_MODEL_ID: z.string().default("scribe_v1"),
+  ELEVENLABS_OUTPUT_FORMAT: z.string().default("mp3_44100_128"),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("VoiceGift <songs@example.com>"),
   ADMIN_EMAILS: z.string().default("")
@@ -33,6 +39,8 @@ const serverSchema = z.object({
 
 export const env = serverSchema.parse(process.env);
 export const isMockMode = env.APP_MODE === "mock";
+export const isElevenLabsProvider =
+  env.MEDIA_PROVIDER === "elevenlabs" || Boolean(env.ELEVENLABS_API_KEY && !env.MEDIA_PROVIDER_API_KEY);
 
 export function assertLiveConfiguration() {
   if (isMockMode) return;
@@ -45,8 +53,8 @@ export function assertLiveConfiguration() {
     "PAYPAL_CLIENT_SECRET",
     "PAYPAL_WEBHOOK_ID",
     "OPENAI_API_KEY",
-    "MEDIA_PROVIDER_BASE_URL",
-    "MEDIA_PROVIDER_API_KEY",
+    isElevenLabsProvider ? "ELEVENLABS_API_KEY" : "MEDIA_PROVIDER_BASE_URL",
+    isElevenLabsProvider ? null : "MEDIA_PROVIDER_API_KEY",
     "APP_ENCRYPTION_KEY",
     "PROJECT_ACCESS_PEPPER",
     "PROVIDER_WEBHOOK_SECRET",
@@ -56,6 +64,6 @@ export function assertLiveConfiguration() {
     "RESEND_API_KEY",
     "EMAIL_FROM",
     "ADMIN_EMAILS"
-  ].filter((key) => !process.env[key]);
+  ].filter((key): key is string => Boolean(key)).filter((key) => !process.env[key]);
   if (missing.length) throw new Error(`Missing live configuration: ${missing.join(", ")}`);
 }

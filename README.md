@@ -102,6 +102,27 @@ Use the new Supabase publishable/secret keys when available. The secret key is s
 
 The server validates project reference, amount, currency, capture status, and webhook signature. Never unlock a song from a client-side callback alone.
 
+## ElevenLabs media provider
+
+VoiceGift includes a built-in ElevenLabs adapter for a first production POC. Configure:
+
+```env
+APP_MODE=live
+ELEVENLABS_API_KEY=...
+MEDIA_PROVIDER=elevenlabs
+```
+
+`MEDIA_PROVIDER=elevenlabs` is recommended, but the app will also select ElevenLabs automatically when `ELEVENLABS_API_KEY` is present and no custom `MEDIA_PROVIDER_API_KEY` is configured.
+
+Required ElevenLabs key permissions:
+
+- Music Generation: Access
+- Speech to Speech: Access
+- Speech to Text: Access
+- Voices: Read + Write
+
+The current adapter creates an original guide song, creates a temporary one-project voice from the verified recording, converts the guide song to that voice, stores the MP3 in Supabase, and deletes the temporary ElevenLabs voice. It intentionally does not create a lyric video yet; full-song unlock currently delivers the full MP3 and share page.
+
 ## Media provider bridge contract
 
 VoiceGift is intentionally vendor-neutral. Configure a small bridge that normalizes the selected music and voice vendors. All three create endpoints receive an idempotency key and return:
@@ -235,6 +256,7 @@ Server secrets:
 - `PAYPAL_CLIENT_SECRET`
 - `PAYPAL_WEBHOOK_ID`
 - `OPENAI_API_KEY`
+- `ELEVENLABS_API_KEY`
 - `MEDIA_PROVIDER_API_KEY`
 - `RESEND_API_KEY`
 - encryption, access-token, webhook, and cron secrets
@@ -262,4 +284,3 @@ Before accepting real payments:
 - Generation claiming is atomic to prevent duplicate jobs.
 - Failed jobs appear in the admin retry queue.
 - Expired projects are anonymized after assets are deleted.
-

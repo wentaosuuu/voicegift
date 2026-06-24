@@ -27,8 +27,13 @@ export async function storeRemoteAsset(projectId: string, kind: string, url: str
   if (!response.ok) throw new Error(`Provider asset download failed: ${response.status}`);
   const bytes = await response.arrayBuffer();
   if (bytes.byteLength > 100 * 1024 * 1024) throw new Error("Provider asset exceeds 100MB");
+  return storeAssetBytes(projectId, kind, bytes, extension);
+}
+
+export async function storeAssetBytes(projectId: string, kind: string, bytes: ArrayBuffer, extension: string) {
+  if (bytes.byteLength > 100 * 1024 * 1024) throw new Error("Provider asset exceeds 100MB");
   const path = `projects/${projectId}/outputs/${kind}.${extension}`;
-  if (isMockMode) return url;
+  if (isMockMode) return `mock://${kind}/${projectId}.${extension}`;
   const supabase = createSupabaseAdmin();
   const contentType = extension === "mp4" ? "video/mp4" : "audio/mpeg";
   const { error } = await supabase!.storage.from(env.SUPABASE_AUDIO_BUCKET).upload(path, bytes, {

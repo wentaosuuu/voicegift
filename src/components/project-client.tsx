@@ -133,7 +133,7 @@ export function ProjectClient({
         {project.status === "preview_ready" || project.status === "awaiting_payment" ? (
           <div className="purchase-card">
             <h3>Unlock the full song · $9.99</h3>
-            <p style={{ color: "var(--muted)" }}>60–90 seconds, MP3, vertical lyric video, and one revision.</p>
+            <p style={{ color: "var(--muted)" }}>60–90 seconds, MP3, private share page, and one revision.</p>
             <PayPalCheckout clientId={paypalClientId} projectId={project.id} token={token} mockMode={mockMode} onCompleted={handlePaymentCompleted} />
           </div>
         ) : null}

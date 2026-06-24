@@ -1,8 +1,14 @@
-import { env, isMockMode } from "@/lib/config";
+import { env, isElevenLabsProvider, isMockMode } from "@/lib/config";
 import { createShareSlug, decryptSecret } from "@/lib/crypto";
 import { sendEmail } from "@/lib/email";
 import { generateLyrics } from "@/lib/providers/lyrics";
 import { submitMediaJob } from "@/lib/providers/media";
+import {
+  composeMusicWithElevenLabs,
+  convertSpeechWithElevenLabs,
+  createElevenLabsVoice,
+  deleteElevenLabsVoice
+} from "@/lib/providers/elevenlabs";
 import {
   addAuditEvent,
   claimGeneration,
@@ -11,7 +17,7 @@ import {
   updateGeneration,
   updateProject
 } from "@/lib/repository";
-import { createSignedAssetUrl, storeRemoteAsset } from "@/lib/storage";
+import { createSignedAssetUrl, storeAssetBytes, storeRemoteAsset } from "@/lib/storage";
 import type { GenerationKind } from "@/types/domain";
 
 export async function startGeneration(projectId: string, kind: GenerationKind) {
@@ -50,6 +56,16 @@ export async function startGeneration(projectId: string, kind: GenerationKind) {
       return;
     }
 
+    if (isElevenLabsProvider) {
+      await runElevenLabsGeneration({
+        project: current,
+        kind,
+        musicGenerationId: generation.id,
+        accessTokenCiphertext: project.access_token_ciphertext
+      });
+      return;
+    }
+
     const result = await submitMediaJob({
       stage: "music",
       project: current,
@@ -60,6 +76,76 @@ export async function startGeneration(projectId: string, kind: GenerationKind) {
   } catch (error) {
     await failProject(projectId, kind, error);
     throw error;
+  }
+}
+
+async function runElevenLabsGeneration(input: {
+  project: Awaited<ReturnType<typeof updateProject>>;
+  kind: GenerationKind;
+  musicGenerationId: string;
+  accessTokenCiphertext: string;
+}) {
+  const musicAudio = await composeMusicWithElevenLabs({
+    project: input.project,
+    kind: input.kind
+  });
+  const guidePath = await storeAssetBytes(
+    input.project.id,
+    `${input.kind}-music-guide`,
+    musicAudio,
+    "mp3"
+  );
+  await updateGeneration(input.musicGenerationId, {
+    status: "succeeded",
+    output_path: guidePath,
+    provider_job_id: `elevenlabs-music-${input.musicGenerationId}`
+  });
+
+  const voiceUrl = await createSignedAssetUrl(input.project.voice_path, 3600);
+  if (!voiceUrl) throw new Error("Verified voice sample URL could not be created");
+
+  let elevenLabsVoiceId: string | null = null;
+  const voiceGeneration = await createGeneration(input.project.id, input.kind, "voice");
+  try {
+    elevenLabsVoiceId = await createElevenLabsVoice({
+      projectId: input.project.id,
+      voiceUrl
+    });
+    await updateGeneration(voiceGeneration.id, {
+      provider_job_id: `elevenlabs-voice-${elevenLabsVoiceId}`
+    });
+    const convertedAudio = await convertSpeechWithElevenLabs({
+      voiceId: elevenLabsVoiceId,
+      sourceAudio: musicAudio
+    });
+    const finalAudioPath = await storeAssetBytes(input.project.id, `${input.kind}-voice`, convertedAudio, "mp3");
+    await updateGeneration(voiceGeneration.id, {
+      status: "succeeded",
+      output_path: finalAudioPath
+    });
+
+    if (input.kind === "preview") {
+      await updateProject(input.project.id, {
+        status: "preview_ready",
+        preview_audio_path: finalAudioPath,
+        payment_status: "unpaid"
+      });
+      await safelySend(input.project.id, () =>
+        sendPreviewEmail(input.project.customer_email, input.project.id, input.accessTokenCiphertext)
+      );
+      return;
+    }
+
+    await updateProject(input.project.id, {
+      status: "completed",
+      full_audio_path: finalAudioPath,
+      share_slug: input.project.share_slug ?? createShareSlug()
+    });
+    await safelySend(input.project.id, () =>
+      sendCompletionEmail(input.project.customer_email, input.project.id, input.accessTokenCiphertext)
+    );
+  } finally {
+    if (elevenLabsVoiceId) await deleteElevenLabsVoice(elevenLabsVoiceId);
   }
 }
 

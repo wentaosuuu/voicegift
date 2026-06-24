@@ -4,6 +4,8 @@ import { capturePayPalOrder, getCaptureId, validateCapture } from "@/lib/paypal"
 import { authorizeProject } from "@/lib/project-access";
 import { addAuditEvent, updateProject } from "@/lib/repository";
 
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { projectId?: string; orderId?: string };
