@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       accessTokenHash: hashAccessToken(token),
       accessTokenCiphertext: encryptSecret(token)
     });
-    await addAuditEvent(project.id, "project_created", { ip });
+    await safeCheck("audit_event", () => addAuditEvent(project.id, "project_created", { ip }), undefined);
     return noStoreJson(
       {
         projectId: project.id,
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("create project failed", error);
-    const message = error instanceof Error ? error.message : "Unknown server error";
+    const message = readableError(error);
     return apiError(`Could not create the song project: ${message}`, 500, "PROJECT_CREATE_FAILED");
   }
 }
@@ -58,4 +58,19 @@ async function safeCheck<T>(label: string, check: () => Promise<T>, fallback: T)
     console.warn(`create project ${label} check skipped`, error);
     return fallback;
   }
+}
+
+function readableError(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const message = record.message ?? record.error_description ?? record.details ?? record.hint ?? record.code;
+    if (typeof message === "string") return message;
+    try {
+      return JSON.stringify(record);
+    } catch {
+      return "Unknown server error";
+    }
+  }
+  return typeof error === "string" ? error : "Unknown server error";
 }
