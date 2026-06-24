@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { startGeneration } from "@/lib/generation";
 import { apiError, noStoreJson } from "@/lib/http";
 import { authorizeProject } from "@/lib/project-access";
@@ -12,7 +13,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!["preview_queued", "failed"].includes(auth.project.status)) {
       return apiError("Preview generation is already active.", 409, "INVALID_STATE");
     }
-    await startGeneration(id, "preview");
+    after(async () => {
+      try {
+        await startGeneration(id, "preview");
+      } catch (error) {
+        console.error("background preview generation failed", error);
+      }
+    });
     return noStoreJson({ accepted: true }, { status: 202 });
   } catch (error) {
     console.error("start preview failed", error);

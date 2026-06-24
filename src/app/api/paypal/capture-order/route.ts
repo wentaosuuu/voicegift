@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { startGeneration } from "@/lib/generation";
 import { apiError, noStoreJson } from "@/lib/http";
 import { capturePayPalOrder, getCaptureId, validateCapture } from "@/lib/paypal";
@@ -28,7 +29,13 @@ export async function POST(request: Request) {
       paypal_capture_id: captureId
     });
     await addAuditEvent(body.projectId, "paypal_payment_captured", { paypalOrderId: body.orderId });
-    await startGeneration(body.projectId, "full");
+    after(async () => {
+      try {
+        await startGeneration(body.projectId!, "full");
+      } catch (error) {
+        console.error("background full generation failed", error);
+      }
+    });
     return noStoreJson({ completed: true });
   } catch (error) {
     console.error("paypal capture failed", error);

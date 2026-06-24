@@ -101,7 +101,7 @@ export async function transcribeWithElevenLabs(input: { audioUrl: string }) {
 
 export async function composeMusicWithElevenLabs(input: { project: Project; kind: GenerationKind }) {
   const response = await fetch(
-    `${ELEVENLABS_BASE_URL}/v1/music?output_format=${encodeURIComponent(env.ELEVENLABS_OUTPUT_FORMAT)}`,
+    `${ELEVENLABS_BASE_URL}/v1/music/compose?output_format=${encodeURIComponent(env.ELEVENLABS_OUTPUT_FORMAT)}`,
     {
       method: "POST",
       headers: {
@@ -125,7 +125,7 @@ export async function createElevenLabsVoice(input: { projectId: string; voiceUrl
   form.append("name", `voicegift-${input.projectId}`);
   form.append("description", "Temporary one-project VoiceGift voice clone from verified user recording.");
   form.append("remove_background_noise", "true");
-  form.append("files", new Blob([source.bytes], { type: source.contentType }), "voice-sample.webm");
+  form.append("files[]", new Blob([source.bytes], { type: source.contentType }), "voice-sample.webm");
 
   const response = await fetch(`${ELEVENLABS_BASE_URL}/v1/voices/add`, {
     method: "POST",
@@ -150,7 +150,7 @@ export async function convertSpeechWithElevenLabs(input: { voiceId: string; sour
   form.append("voice_settings", JSON.stringify({ stability: 0.45, similarity_boost: 0.75, style: 0.25 }));
 
   const response = await fetch(
-    `${ELEVENLABS_BASE_URL}/v1/speech-to-speech/${encodeURIComponent(input.voiceId)}/stream?output_format=${encodeURIComponent(env.ELEVENLABS_OUTPUT_FORMAT)}`,
+    `${ELEVENLABS_BASE_URL}/v1/speech-to-speech/${encodeURIComponent(input.voiceId)}?output_format=${encodeURIComponent(env.ELEVENLABS_OUTPUT_FORMAT)}`,
     {
       method: "POST",
       headers: headers(),

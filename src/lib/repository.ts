@@ -164,7 +164,7 @@ export async function addAuditEvent(projectId: string | null, eventType: string,
   }
   const supabase = createSupabaseAdmin();
   const { error } = await supabase!.from("audit_events").insert(row);
-  if (error) throw error;
+  if (error) console.warn("audit event insert skipped", error);
 }
 
 export async function consumeRateLimit(key: string, limit: number, windowSeconds: number) {

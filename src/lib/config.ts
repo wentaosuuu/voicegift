@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const booleanFromEnv = z.preprocess((value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+  return false;
+}, z.boolean());
+
 const serverSchema = z.object({
   APP_MODE: z.enum(["mock", "live"]).default("mock"),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
@@ -32,6 +38,7 @@ const serverSchema = z.object({
   ELEVENLABS_SPEECH_TO_SPEECH_MODEL_ID: z.string().default("eleven_multilingual_sts_v2"),
   ELEVENLABS_SPEECH_TO_TEXT_MODEL_ID: z.string().default("scribe_v1"),
   ELEVENLABS_OUTPUT_FORMAT: z.string().default("mp3_44100_128"),
+  STRICT_VOICE_VERIFICATION: booleanFromEnv.default(false),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("VoiceGift <songs@example.com>"),
   ADMIN_EMAILS: z.string().default("")

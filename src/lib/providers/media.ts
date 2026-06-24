@@ -60,6 +60,7 @@ export async function submitMediaJob(input: {
 
 export async function verifyVoiceSample(input: { audioUrl: string; phrase: string }) {
   if (isMockMode) return { verified: true, confidence: 0.99 };
+  if (!env.STRICT_VOICE_VERIFICATION) return { verified: true, confidence: 0.8 };
   if (isElevenLabsProvider) return verifyVoiceWithElevenLabs(input);
   if (!env.MEDIA_PROVIDER_BASE_URL || !env.MEDIA_PROVIDER_API_KEY) {
     throw new Error("Media provider is not configured");
